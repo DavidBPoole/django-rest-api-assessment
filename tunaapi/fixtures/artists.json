@@ -1,0 +1,29 @@
+[
+  {
+    "model": "tunaapi.artist",
+    "pk": 1,
+    "fields": {
+        "name": "Taylor Swift",
+        "age": 33,
+        "bio": "Taylor Swift is a very successful music artist. As one of the world's leading contemporary recording artists, she is known for narrative songs about her personal life, which have received widespread media coverage. Having sold more than 50 million albums - including 37 million in the US, Swift is one of the world's best-selling music artists and the highest-earning female musician of the 2010s."
+      }
+  },
+  {
+    "model": "tunaapi.artist",
+    "pk": 2,
+    "fields": {
+        "name": "Morgan Wallen",
+        "age": 30,
+        "bio": "An American country musician and singer signed to Big Loud Records. He has released three singles, The Way I Talk, Up Down (featuring Florida Georgia Line), and his current single Whiskey Glasses."
+      }
+  },
+  {
+    "model": "tunaapi.artist",
+    "pk": 3,
+    "fields": {
+        "name": "Drake",
+        "age": 37,
+        "bio": "A Canadian rapper, singer, and actor.[6] who has sold over five million album copies. He was born in Toronto, Ontario. He was the character Jimmy Brooks for eight seasons on the television show Degrassi: The Next Generation. He is of Jewish and Black/Afro-American descent. His mother is white and his father is black."
+      }
+  }
+]
