@@ -1,0 +1,32 @@
+[
+  {
+    "model": "tunaapi.song",
+    "pk": 1,
+    "fields": {
+      "title": "Anti-Hero",
+      "artist_id": 1,
+      "album": "Midnights",
+      "length": "306"
+      }
+  },
+  {
+    "model": "tunaapi.song",
+    "pk": 2,
+    "fields": {
+      "title": "The Way I Talk",
+      "artist_id": 2,
+      "album": "If I Know Me",
+      "length": "198"
+      }
+  },
+  {
+    "model": "tunaapi.song",
+    "pk": 3,
+    "fields": {
+      "title": "Too Much",
+      "artist_id": 3,
+      "album": "Nothing Was the Same",
+      "length": "254"
+      }
+  }
+]
