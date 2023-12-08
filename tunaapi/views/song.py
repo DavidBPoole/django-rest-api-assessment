@@ -48,15 +48,15 @@ class SongView(ViewSet):
       Returns 
           Response -- JSON serialized song instance
       """
-      artist_id = Artist.objects.get(pk=request.data["artistId"])
+      artist_id = Artist.objects.get(pk=request.data["artist_id"])
       song = Song.objects.create(
-        title=request.data["title"],
-        album=request.data["album"],
-        length=parse_duration(request.data["length"]),
+        title = request.data["title"],
+        album = request.data["album"],
+        length = request.data["length"],
         artist_id=artist_id,
       )
       serializer = SongSerializer(song)
-      return Response(serializer.data)
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     
     def update(self, request, pk):
@@ -67,9 +67,9 @@ class SongView(ViewSet):
         song = Song.objects.get(pk=pk)
         song.title = request.data["title"]
         song.album = request.data["album"]
-        song.length = parse_duration(request.data["length"])
+        song.length = request.data["length"]
         
-        artist_id = Artist.objects.get(pk=request.data["artistId"])
+        artist_id = Artist.objects.get(pk=request.data["artist_id"])
         song.artist_id = artist_id
         song.save()
         
@@ -95,4 +95,4 @@ class SongSerializer(serializers.ModelSerializer):
   class Meta:
       model = Song
       fields = ('id', 'title', 'artist_id', 'album', 'length', 'genres')
-      depth = 1
+      depth = 0
