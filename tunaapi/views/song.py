@@ -3,8 +3,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from tunaapi.models import Song, Artist, SongGenre, Genre
-from django.utils.dateparse import parse_duration
+from tunaapi.models import Song, Artist
 
 
 class SongView(ViewSet):
@@ -16,7 +15,7 @@ class SongView(ViewSet):
       """
       try:  
           song = Song.objects.get(pk=pk)
-          serializer = SongSerializer(song)
+          serializer = AllInfoSongSerializer(song)
           return Response(serializer.data, status=status.HTTP_200_OK)
       except Song.DoesNotExist as ex:
           return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
@@ -73,7 +72,8 @@ class SongView(ViewSet):
         song.artist_id = artist_id
         song.save()
         
-        return Response(None, status=status.HTTP_204_NO_CONTENT)
+        serializer = SongSerializer(song)
+        return Response(serializer.data, status=status.HTTP_200_OK)
       
       
     def destroy(self, request, pk):
@@ -81,18 +81,40 @@ class SongView(ViewSet):
         song.delete()
         return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-        
-class SongGenreSerializer(serializers.ModelSerializer):
-  class Meta:
-      model = SongGenre
-      fields = ('genre_id', )
-      depth = 1
-      
+
 class SongSerializer(serializers.ModelSerializer):
   """JSON serializer for songs"""
-  genres = SongGenreSerializer(many=True, read_only=True)
-  
+#   genres = SongGenreSerializer(many=True, read_only=True) - removed genres for single song view
   class Meta:
       model = Song
-      fields = ('id', 'title', 'artist_id', 'album', 'length', 'genres')
+      fields = ('id', 'title', 'artist_id', 'album', 'length') # removed 'genres' from fields since only want it to be in the single song view
       depth = 0
+
+# This detailed view of a single song and its info did not involve the use of joining tables, but sequentially piling on the required data in the correct order pulling it directly instead of joining serialized data:
+class AllInfoSongSerializer(serializers.ModelSerializer):
+    """JSON serializer for all info for a single song view"""
+    artist = serializers.SerializerMethodField()
+    genres = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Song
+        fields = ('id', 'title', 'artist', 'album', 'length', 'genres')
+        depth = 2
+    
+      
+    def get_artist(self, song):
+        artist_data = {
+            'id': song.artist_id.id,
+            'name': song.artist_id.name,
+            'age': song.artist_id.age,
+            'bio': song.artist_id.bio
+        }
+        return artist_data
+
+    
+    def get_genres(self, song):
+        genres_data = [
+            {'id': song_genre.genre_id.id, 
+             'description': song_genre.genre_id.description} 
+            for song_genre in song.songgenre_set.all()]
+        return genres_data

@@ -8,7 +8,6 @@ from tunaapi.models import Song, Genre, SongGenre
 
 class SongGenreView(ViewSet):
     """Tuna api song genre view"""
-    # get the genres of a single song
     def retrieve(self, request, pk):
       """Handle GET requests for single song genres
       Returns:
@@ -30,7 +29,8 @@ class SongGenreView(ViewSet):
       song_genres = SongGenre.objects.all()   
       serializer = SongGenreSerializer(song_genres, many=True)
       return Response(serializer.data)
-  
+    
+    
     def create(self, request):
       """Handle POST operations for song_genres
       Returns

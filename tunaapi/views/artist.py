@@ -17,7 +17,7 @@ class ArtistView(ViewSet):
         Response -- JSON serialized artist
       """
       try:
-          # artist = Artist.objects.get(pk=pk)
+          # artist = Artist.objects.get(pk=pk) - this is to obtain artist without a song count
           artist = Artist.objects.annotate(song_count=Count('songs')).get(pk=pk)
           serializer = AllArtistInfoSerializer(artist)
           return Response(serializer.data, status=status.HTTP_200_OK)
@@ -30,16 +30,16 @@ class ArtistView(ViewSet):
       Returns:
           Response -- JSON serialized list of artists
       """
-      # artists = Artist.objects.all()
+      # artists = Artist.objects.all() - view without song_count
       artists = Artist.objects.annotate(song_count=Count('songs')).all()
       
       # filter to query artists by genre_id
       requested_genre = request.query_params.get('genre_id', None)
       if requested_genre is not None:
         artists = Artist.objects.filter(songs__genres__genre_id=requested_genre)
+        
       serializer = ArtistSerializer(artists, many=True)
       return Response(serializer.data, status=status.HTTP_200_OK)
-      # return Response(serializer.data)
     
     
     def create(self, request):
@@ -67,7 +67,9 @@ class ArtistView(ViewSet):
       artist.age = request.data["age"]
       artist.bio = request.data["bio"]
       artist.save()
-      return Response(None, status=status.HTTP_204_NO_CONTENT)
+      
+      serializer = ArtistSerializer(artist)
+      return Response(serializer.data, status=status.HTTP_200_OK)
     
     
     def destroy(self, request, pk):
@@ -84,16 +86,7 @@ class ArtistSerializer(serializers.ModelSerializer):
       fields = ('id', 'name', 'age', 'bio')
       depth = 0
 
-# Old AllArtistInfoSerializer:
-# class AllArtistInfoSerializer(serializers.ModelSerializer):
-#   """JSON serializer for artists"""
-#   song_count = serializers.IntegerField(default=None)
-#   class Meta:
-#       model = Artist
-#       fields = ('id', 'name', 'age', 'bio', 'song_count', 'songs')
-#       depth = 1
-
-# This new serializer method eliminates the artist_id from the postman single artist return body to match MVP requirements:
+# This serializer method eliminates the artist_id from the postman single artist return body to match MVP requirements:
 class AllArtistInfoSerializer(serializers.ModelSerializer):
     """JSON serializer for artists"""
     song_count = serializers.IntegerField(default=None)
@@ -104,8 +97,10 @@ class AllArtistInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'age', 'bio', 'song_count', 'songs')
         depth = 1
 
+    
     def get_songs(self, artist):
         songs_data = SongSerializer(artist.songs.all(), many=True).data
+        # This loop works when you dont want to create a special second serializer for "songs" lacking the artist_id field. However, if you want to avoid the loop, you would need to create a second Song serializer without "artist_id" and call it in this "get_songs" function as the serializer for songs_data.
         for song in songs_data:
             # Removes the undesired field 'artist_id' from each song:
             if 'artist_id' in song:
