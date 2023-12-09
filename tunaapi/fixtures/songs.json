@@ -28,5 +28,15 @@
       "album": "Nothing Was the Same",
       "length": "254"
       }
+  },
+  {
+    "model": "tunaapi.song",
+    "pk": 4,
+    "fields": {
+      "title": "Cruel Summer",
+      "artist_id": 1,
+      "album": "Lover",
+      "length": "350"
+      }
   }
 ]
