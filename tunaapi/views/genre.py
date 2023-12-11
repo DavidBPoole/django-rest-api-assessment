@@ -3,7 +3,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from tunaapi.models import Genre
+from tunaapi.models import Genre, Song
 
 
 class GenreView(ViewSet):
@@ -59,32 +59,46 @@ class GenreView(ViewSet):
       genre = Genre.objects.get(pk=pk)
       genre.delete()
       return Response(None, status=status.HTTP_204_NO_CONTENT)
-      
+
+
 class GenreSerializer(serializers.ModelSerializer):
     """JSON Serializer for genres"""
-
     class Meta:
         model = Genre
         fields = ('id', 'description')
 
-class GenreWithSongsSerializer(serializers.ModelSerializer):
-    """JSON serializer for genres with associated songs"""
-    songs = serializers.SerializerMethodField()
+# This serializer references the parent serializers without calling directly creating a circular import and displays the desired data with dot notation:
+# class GenreWithSongsSerializer(serializers.ModelSerializer):
+#     """JSON serializer for genres with associated songs"""
+#     songs = serializers.SerializerMethodField()
 
+#     class Meta:
+#         model = Genre
+#         fields = ('id', 'description', 'songs')
+
+    
+#     def get_songs(self, genre):
+#         songs_data = [
+#             {
+#                 'id': song.song_id.id,
+#                 'title': song.song_id.title,
+#                 'artist_id': song.song_id.artist_id.id,
+#                 'album': song.song_id.album,
+#                 'length': song.song_id.length,
+#             }
+#             for song in genre.songgenre_set.all()
+#         ]
+#         return songs_data
+
+# These serializers correctly join tables for genre and song to display the song information nested below the genre information:
+class SongSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Song
+        fields = ('id', 'title', 'artist_id', 'album', 'length')
+       
+class GenreWithSongsSerializer(serializers.ModelSerializer):
+    songs = SongSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Genre
         fields = ('id', 'description', 'songs')
-
-    
-    def get_songs(self, genre):
-        songs_data = [
-            {
-                'id': song.song_id.id,
-                'title': song.song_id.title,
-                'artist_id': song.song_id.artist_id.id,
-                'album': song.song_id.album,
-                'length': song.song_id.length,
-            }
-            for song in genre.songgenre_set.all()
-        ]
-        return songs_data

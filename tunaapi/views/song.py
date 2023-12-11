@@ -3,7 +3,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from tunaapi.models import Song, Artist
+from tunaapi.models import Song, Artist, Genre, SongGenre
 
 
 class SongView(ViewSet):
@@ -15,7 +15,7 @@ class SongView(ViewSet):
       """
       try:  
           song = Song.objects.get(pk=pk)
-          serializer = AllInfoSongSerializer(song)
+          serializer = DetailedSongViewSerializer(song)
           return Response(serializer.data, status=status.HTTP_200_OK)
       except Song.DoesNotExist as ex:
           return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
@@ -28,16 +28,13 @@ class SongView(ViewSet):
       """
       songs = Song.objects.all()
       
-      # filter to query songs by artist_id
-      artist = request.query_params.get('artist_id', None)
+      artist = request.query_params.get('artist_id', None) # filter to query songs by artist_id
       if artist is not None:
           songs = songs.filter(artist_id_id=artist)
-   
-      # filter to query songs by genre_id
-      requested_genre = request.query_params.get('genre_id', None)
+      requested_genre = request.query_params.get('genre_id', None) # filter to query songs by genre_id
       if requested_genre is not None:
           songs = Song.objects.filter(genres__genre_id__id=requested_genre)
-        
+          
       serializer = SongSerializer(songs, many=True)
       return Response(serializer.data)
     
@@ -84,37 +81,51 @@ class SongView(ViewSet):
 
 class SongSerializer(serializers.ModelSerializer):
   """JSON serializer for songs"""
-#   genres = SongGenreSerializer(many=True, read_only=True) - removed genres for single song view
   class Meta:
       model = Song
-      fields = ('id', 'title', 'artist_id', 'album', 'length') # removed 'genres' from fields since only want it to be in the single song view
+      fields = ('id', 'title', 'artist_id', 'album', 'length')
       depth = 0
 
-# This detailed view of a single song and its info did not involve the use of joining tables, but sequentially piling on the required data in the correct order pulling it directly instead of joining serialized data:
-class AllInfoSongSerializer(serializers.ModelSerializer):
-    """JSON serializer for all info for a single song view"""
-    artist = serializers.SerializerMethodField()
-    genres = serializers.SerializerMethodField()
+# This detailed view of a single song and its info did not involve the use of joining tables, but referenced the parent serializers sequentially calling the data with dot notation displaying it directly instead of joining serialized data:
+# class AllInfoSongSerializer(serializers.ModelSerializer):
+#     """JSON serializer for all info for a single song view"""
+#     artist = serializers.SerializerMethodField()
+#     genres = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Song
-        fields = ('id', 'title', 'artist', 'album', 'length', 'genres')
-        depth = 2
+#     class Meta:
+#         model = Song
+#         fields = ('id', 'title', 'artist', 'album', 'length', 'genres')
+#         depth = 2
     
       
-    def get_artist(self, song):
-        artist_data = {
-            'id': song.artist_id.id,
-            'name': song.artist_id.name,
-            'age': song.artist_id.age,
-            'bio': song.artist_id.bio
-        }
-        return artist_data
+#     def get_artist(self, song):
+#         artist_data = {
+#             'id': song.artist_id.id,
+#             'name': song.artist_id.name,
+#             'age': song.artist_id.age,
+#             'bio': song.artist_id.bio
+#         }
+#         return artist_data
 
     
-    def get_genres(self, song):
-        genres_data = [
-            {'id': song_genre.genre_id.id, 
-             'description': song_genre.genre_id.description} 
-            for song_genre in song.songgenre_set.all()]
-        return genres_data
+#     def get_genres(self, song):
+#         genres_data = [
+#             {'id': song_genre.genre_id.id, 
+#              'description': song_genre.genre_id.description} 
+#             for song_genre in song.songgenre_set.all()]
+#         return genres_data
+
+class GenreSerializer(serializers.ModelSerializer):
+    """JSON serializer for genre data"""
+    class Meta:
+        model = Genre
+        fields = ('id', 'description')
+        depth = 1
+        
+class DetailedSongViewSerializer(serializers.ModelSerializer):
+    """JSON serializer to get song details with artist and genre nested data"""
+    genres = GenreSerializer(many=True, read_only=True)
+    class Meta:
+        model = Song
+        fields = ('id', 'title', 'artist_id', 'album', 'length', 'genres')
+        depth = 1
